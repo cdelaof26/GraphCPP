@@ -1,0 +1,12 @@
+# Directories
+.idea
+cmake-build-debug
+
+# Files
+fonts/*.c
+*.sh
+*.txt
+*.DS_Store
+
+# Executables
+graph
