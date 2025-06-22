@@ -11,9 +11,17 @@ Prim and Kruskal (find minimum spanning tree).
 
 ### Running
 ```bash
-g++ --std=c++11 *.cpp fonts/*.cpp -o graph -lSDL2 && ./graph
+g++ --std=c++11 *.cpp fonts/*.cpp algorithms/*.cpp -o graph -lSDL2 && ./graph
 ```
 
+### Licensing
+Licensed under the [MIT License](LICENSE). Copyright 2025 MiguelPereZero and @cdelaof26.
+
 ### Versioning
+
+#### v0.0.2 Graph representation
+- Added button (buggy)
+- Added Algoritmos from MiguelPereZero
+- Added [LICENSE](LICENSE)
 
 #### v0.0.1 Initial project

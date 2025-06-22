@@ -5,6 +5,8 @@
 #include <stdexcept>
 #include <cstdio>
 
+#define PI 3.141592
+
 class Color {
 private:
     bool rgbCalculated;
@@ -25,6 +27,7 @@ protected:
 
 public:
     Color() : r(0), g(0), b(0), rgbCalculated(false), rgb(0) { }
+    explicit Color(int channel) : r(channel), g(channel), b(channel), rgbCalculated(false), rgb(0) { }
     Color(int _r, int _g, int _b) : r(_r), g(_g), b(_b), rgbCalculated(false), rgb(0) {
         if (_r < 0 || _r > 255 || _g < 0 || _g > 255 || _b < 0 || _b > 255)
             throw std::runtime_error("Init color channel outside range [0, 255]");
@@ -50,6 +53,12 @@ public:
 
     void setBlue(int blue) {
         setChannel(b, blue);
+    }
+
+    void setChannels(int value) {
+        setChannel(r, value);
+        setChannel(g, value);
+        setChannel(b, value);
     }
 
     int getRed() const {
@@ -87,18 +96,22 @@ protected:
     int borderWidth;
 
 public:
-    Point center;
+    Point location;
     Color color;
 
     Color borderColor;
 
-    Shape(Point _center, Color _color)
-        : center(_center), color(_color),
+    Shape(Point _location, Color _color)
+        : location(_location), color(_color),
+          borderWidth(0), borderColor() {}
+
+    explicit Shape(Point _location)
+        : location(_location), color(),
           borderWidth(0), borderColor() {}
 
     Shape()
-            : center(), color(),
-              borderWidth(0), borderColor() {}
+        : location(), color(),
+          borderWidth(0), borderColor() {}
 
     void setBorderWidth(int _borderWidth) {
         if (_borderWidth < 0)
@@ -109,6 +122,42 @@ public:
     virtual void render(fun setPixel) { }
 };
 
+class Rectangle: public Shape {
+protected:
+    int width, height;
+public:
+    Rectangle(Point _point, int _width, int _height) : Shape(_point), width(_width), height(_height) { }
+    Rectangle(int _width, int _height) : Shape(), width(_width), height(_height) { }
+
+    void setWidth(int _width) {
+        if (_width < 0)
+            throw std::runtime_error("Width cannot be negative");
+
+        width = _width;
+    }
+
+    void setHeight(int _height) {
+        if (_height < 0)
+            throw std::runtime_error("Width cannot be negative");
+
+        height = _height;
+    }
+
+    int getWidth() const {
+        return width;
+    }
+
+    int getHeight() const {
+        return height;
+    }
+
+    void render(fun setPixel) override {
+        for (int x1 = location.x; x1 <= location.x + width; x1++)
+            for (int y1 = location.y; y1 <= location.y + height; y1++)
+                setPixel(x1, y1, color);
+    }
+};
+
 class Circle: public Shape {
 private:
     int progress = 0;
@@ -117,28 +166,28 @@ private:
 
     void setCirclePixel(int i, int j, fun setPixel) const {
 	    if (ended || progress > multiplier && progress < multiplier * 2)
-            setPixel(j + center.x, i + center.y, borderColor);
+            setPixel(j + location.x, i + location.y, borderColor);
 
         if (ended || progress > multiplier * 2 && progress < multiplier * 3)
-            setPixel(i + center.x, j + center.y, borderColor);
+            setPixel(i + location.x, j + location.y, borderColor);
 
         if (ended || progress > multiplier * 3 && progress < multiplier * 4)
-            setPixel(-i + center.x, j + center.y, borderColor);
+            setPixel(-i + location.x, j + location.y, borderColor);
 
         if (ended || progress > multiplier * 4 && progress < multiplier * 5)
-            setPixel(-j + center.x, i + center.y, borderColor);
+            setPixel(-j + location.x, i + location.y, borderColor);
 
         if (ended || progress > multiplier * 5 && progress < multiplier * 6)
-            setPixel(-j + center.x, -i + center.y, borderColor);
+            setPixel(-j + location.x, -i + location.y, borderColor);
 
         if (ended || progress > multiplier * 6 && progress < multiplier * 7)
-            setPixel(-i + center.x, -j + center.y, borderColor);
+            setPixel(-i + location.x, -j + location.y, borderColor);
 
         if (ended || progress > multiplier * 7 && progress < multiplier * 8)
-            setPixel(i + center.x, -j + center.y, borderColor);
+            setPixel(i + location.x, -j + location.y, borderColor);
 
         if (ended || progress > multiplier * 8 && progress < multiplier * 9)
-            setPixel(j + center.x, -i + center.y, borderColor);
+            setPixel(j + location.x, -i + location.y, borderColor);
     }
 
 public:
@@ -151,8 +200,8 @@ public:
         // Horizontal scanline
         for (int dy = -radius; dy < radius; dy++) {
             int dx = floor(sqrt(radius * radius - dy * dy));
-            for (int i = center.x - dx; i <= center.x + dx; i++)
-                setPixel(i, center.y - dy, color);
+            for (int i = location.x - dx; i <= location.x + dx; i++)
+                setPixel(i, location.y - dy, color);
         }
 
         int r = radius;
@@ -191,7 +240,7 @@ public:
 class Line: public Shape {
 private:
     int t = 0;
-    int maxT = 50;
+    int maxT = 80;
 
     void setLinePixel(int x, int y, fun setPixel) const {
         if (borderWidth == 1) {
@@ -306,5 +355,7 @@ public:
         }
     }
 };
+
+void init_regular_star(Point points[], int n, int cx, int cy, int r, double iniAngle);
 
 #endif //GRAPH_2D_H

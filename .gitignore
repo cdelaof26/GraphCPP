@@ -1,6 +1,7 @@
 # Directories
 .idea
 cmake-build-debug
+Algoritmos
 
 # Files
 fonts/*.c

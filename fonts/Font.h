@@ -34,6 +34,10 @@ public:
         : location(_location), textColor(Color()), text(std::move(_text)),
           fontMultiplier(1), font(_font) { }
 
+    UIText(std::string _text, Font & _font)
+            : location(), textColor(Color()), text(std::move(_text)),
+              fontMultiplier(1), font(_font) { }
+
     void setFontMultiplier(int _fontMultiplier) {
         if (_fontMultiplier < 0)
             throw std::runtime_error("Font multiplier cannot be less than 1");
