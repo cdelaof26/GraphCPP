@@ -257,9 +257,8 @@ protected:
     int semiWidth {};
 public:
     Point & start, & end;
-    Color color;
 
-    Line(Point & _start, Point & _end) : Shape(), start(_start), end(_end), color() {
+    Line(Point & _start, Point & _end) : Shape(), start(_start), end(_end) {
         setWidth(4);
     }
 

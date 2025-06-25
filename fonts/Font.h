@@ -19,24 +19,25 @@ public:
 
 void loadFont(Font & f);
 
-class UIText {
+class UIText: public Shape {
 private:
     Font & font;
+
 protected:
     int fontMultiplier;
 
 public:
-    Point location;
-    Color textColor;
     std::string text;
 
     UIText(Point _location, std::string _text, Font & _font)
-        : location(_location), textColor(Color()), text(std::move(_text)),
+        : Shape(_location), text(std::move(_text)),
           fontMultiplier(1), font(_font) { }
 
     UIText(std::string _text, Font & _font)
-            : location(), textColor(Color()), text(std::move(_text)),
-              fontMultiplier(1), font(_font) { }
+        : Shape(), text(std::move(_text)),
+          fontMultiplier(1), font(_font) { }
+
+    explicit UIText(Font & _font) : Shape(), text(), fontMultiplier(1), font(_font) { }
 
     void setFontMultiplier(int _fontMultiplier) {
         if (_fontMultiplier < 0)
@@ -49,15 +50,16 @@ public:
         return 16 * fontMultiplier;
     }
 
-    void renderText(fun setPixel) {
+    void render(fun setPixel) override {
         int padding = 0;
+        int realSize = getRealSize();
         for (char c : text) {
             for (int i = 0; i < getRealSize(); i++)
                 for (int j = 0; j < getRealSize(); j++)
                     if (font.data[c][i / fontMultiplier][j / fontMultiplier])
-                        setPixel(padding + location.x + i, location.y + j, textColor);
+                        setPixel(padding + location.x + i, location.y + j, color);
 
-            padding += 16 * fontMultiplier;
+            padding += realSize;
         }
     }
 };

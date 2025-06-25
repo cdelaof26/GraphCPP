@@ -6,6 +6,43 @@ void print_shortest_path(int n, int array[n],int source){
     }
 }
 
+int get_matrix_length(const std::string& filename){
+    std::ifstream file(filename);
+    if (!file.is_open())
+        return 0;
+
+    std::string s;
+    std::getline(file, s);
+    std::getline(file, s);
+    file.close();
+
+    int count = 1;
+    for (char ch : s)
+        if (ch == ' ')
+            count++;
+
+    return count;
+}
+
+void create_matrix_from_file(const std::string& filename, int n, std::string& algorithmName, std::vector<std::vector<int>>& matrix) {
+    if (n == 0)
+        return;
+
+    std::ifstream file(filename);
+    if (!file.is_open())
+        return;
+
+    std::getline(file, algorithmName);
+
+    for (int i = 0; i < n; i++){
+        for (int j = 0 ; j < n; j++)
+            file >> matrix[i][j];
+            // fscanf(fptr, "%d ", &matrix[i][j]);
+    }
+
+    file.close();
+}
+
 void create_matrix(int n, std::vector<std::vector<int>>& matrix, int value) {
 	for (int i = 0; i < n; i++)
 		for(int j = 0 ; j < n; j++)
@@ -25,7 +62,7 @@ void print_matrix(int n, std::vector<std::vector<int>>& matrix){
 	}
 }
 
-void kruskal(int n, std::vector<std::vector<int>>& adjacency_matrix, std::vector<std::vector<int>>& mst){
+std::vector<std::vector<std::vector<int>>> * kruskal(int n, std::vector<std::vector<int>>& adjacency_matrix, std::vector<std::vector<int>>& mst) {
 	create_matrix(n, mst, 0);
     int belong_nodes[n];
 
@@ -39,8 +76,9 @@ void kruskal(int n, std::vector<std::vector<int>>& adjacency_matrix, std::vector
 	//the total of edges is equal to total_nodes - 1;
 	int edges = 0;
 
+    auto * states = new std::vector<std::vector<std::vector<int>>>();
+
 	while (edges < n - 1){
-		printf("total edges; %d \n", edges);
 		int min = INF;
 		for (int i = 0; i < n ; i++ ){
 			for (int j = i + 1; j < n; j++ ){
@@ -54,7 +92,8 @@ void kruskal(int n, std::vector<std::vector<int>>& adjacency_matrix, std::vector
 		// add to MST if the nodes don't belong same tree
 		if (belong_nodes[nodeA] != belong_nodes[nodeB]) {
 			insert_edge(n, mst, nodeA, nodeB, min);
-			print_matrix(n, mst);
+			states -> push_back(mst);
+            print_matrix(n, mst);
 			//add all nodes from nodeB to nodeA
 			int temp = belong_nodes[nodeB];
 			belong_nodes[nodeB] = belong_nodes[nodeA];
@@ -62,6 +101,8 @@ void kruskal(int n, std::vector<std::vector<int>>& adjacency_matrix, std::vector
 			edges++;
 		}
 	}
+
+    return states;
 }
 
 void prim(int n, std::vector<std::vector<int>>& adjacency_matrix, std::vector<std::vector<int>>& mst){

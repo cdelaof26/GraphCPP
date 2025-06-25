@@ -29,7 +29,7 @@ public:
         int len = t.getRealSize() / 2;
         t.location.x = (int) (location.x - len * t.text.length());
         t.location.y = location.y - len;
-        t.renderText(setPixel);
+        t.render(setPixel);
     }
 };
 
@@ -44,7 +44,7 @@ public:
 
     UILine(Point & _start, Point & _end, std::string text, Font & _f)
         : Line(_start, _end), t(std::move(text), _f), r(0, 0) {
-        t.textColor.setChannels(255);
+        t.color.setChannels(255);
         r.color.setChannels(0);
 
         t.setFontMultiplier(1);
@@ -64,7 +64,7 @@ public:
 
         Line::render(setPixel);
         r.render(setPixel);
-        t.renderText(setPixel);
+        t.render(setPixel);
     }
 };
 
@@ -73,50 +73,66 @@ protected:
     Color hoverColor;
     Color tmp;
     bool hover = false;
-    int padding;
-    int semiPadding;
+    bool prevStateIsHover = false;
+    int padding = 0;
+    int semiPadding = 0;
+    action fun;
+    UIText t;
 
 public:
-    UIText t;
-    action fun;
-
     UIButton(action _fun, std::string text, Font & _f)
-        : Rectangle(0, 0), fun(_fun), t(UIText(std::move(text), _f)),
+        : Rectangle(0, 0), fun(_fun), t(UIText(_f)),
           hoverColor(200), tmp() {
-        t.setFontMultiplier(2);
-        padding = t.getRealSize();
-        semiPadding = padding / 2;
-        width = (int) (t.getRealSize() * t.text.length()) + padding;
-        height = 2 * padding;
+        setText(std::move(text));
         color.setChannels(235);
         tmp = color;
     }
 
     void setHover(int x, int y) {
-        bool _hover = x >= location.x && x <= location.x + width
-                      && y >= location.y && y <= location.y + height;
+        hover = x >= location.x && x <= location.x + width
+                && y >= location.y && y <= location.y + height;
 
-        if (_hover) {
-            if (!hover)
-                tmp = color;
-            hover = _hover;
+        if (hover) {
+            if (prevStateIsHover)
+                return;
+
+            prevStateIsHover = true;
+            tmp = color;
             color = hoverColor;
             return;
         }
 
+        prevStateIsHover = false;
         color = tmp;
     }
 
     void triggerAction() const {
-        if (hover)
+        if (hover && fun != nullptr)
             this -> fun();
+    }
+
+    void setAction(action _fun) {
+        fun = _fun;
+    }
+
+    void setText(std::string _text) {
+        t.text = std::move(_text);
+        t.setFontMultiplier(2);
+        padding = t.getRealSize();
+        semiPadding = padding / 2;
+        width = (int) (t.getRealSize() * t.text.length()) + padding;
+        height = 2 * padding;
+    }
+
+    void setTextColor(Color c) {
+        t.color = c;
     }
 
     void render(::fun setPixel) override {
         t.location.x = location.x + semiPadding;
         t.location.y = location.y + semiPadding;
         Rectangle::render(setPixel);
-        t.renderText(setPixel);
+        t.render(setPixel);
     }
 };
 

@@ -6,7 +6,7 @@ Algoritmos
 # Files
 fonts/*.c
 *.sh
-*.txt
+CMakeLists.txt
 *.DS_Store
 
 # Executables

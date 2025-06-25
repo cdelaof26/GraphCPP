@@ -7,6 +7,8 @@
 #include <utility>
 #include "2d.h"
 
+#define MAX_UI_ELEMENTS 500
+
 class Window {
 private:
     int width, height;
@@ -18,6 +20,11 @@ private:
     SDL_Renderer * renderer;
     SDL_Window * window;
     bool initialized;
+
+    Shape * shapes[MAX_UI_ELEMENTS] = {nullptr};
+    int createdShapes = 0;
+    Shape * uiElements[MAX_UI_ELEMENTS] = {nullptr};
+    int createdUIElements = 0;
 public:
     Color background {};
 
@@ -115,6 +122,54 @@ public:
 
         // j = height - j - 1;
         ((u_int32_t *) surface -> pixels)[j * width + i] = c.getRGB();
+    }
+
+    void renderShapes(fun setPixel) const {
+        for (int k = createdShapes - 1; k > -1; k--)
+            shapes[k] -> render(setPixel);
+
+        for (int k = createdUIElements - 1; k > -1; k--)
+            uiElements[k] -> render(setPixel);
+    }
+
+    void pushShape(Shape * s) {
+        if (createdShapes > MAX_UI_ELEMENTS)
+            throw std::runtime_error("Cannot save more Shapes");
+
+        shapes[createdShapes++] = s;
+    }
+
+    void pushUIElement(Shape * s) {
+        if (createdUIElements > MAX_UI_ELEMENTS)
+            throw std::runtime_error("Cannot save more UI elements");
+
+        uiElements[createdUIElements++] = s;
+    }
+
+    void deleteFirstUIElement() {
+        if (createdUIElements < 1)
+            return;
+
+        delete uiElements[0];
+        for (int i = 0; i < createdUIElements - 1; i++)
+            uiElements[i] = uiElements[i + 1];
+        createdUIElements--;
+    }
+
+    Shape * getShape(int index) const {
+        return shapes[index];
+    };
+
+    int getCreatedShapes() const {
+        return createdShapes;
+    }
+
+    Shape * getUIElement(int index) const {
+        return uiElements[index];
+    };
+
+    int getCreatedUIElements() const {
+        return createdUIElements;
     }
 };
 

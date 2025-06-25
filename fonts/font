@@ -1,4 +1,4 @@
--- Taken from http://www.rinkydinkelectronics.com/r_fonts.php ; arial_bold.c
+-- Taken from https://github.com/andremourato/BasketballScoreboard/blob/master/LSDig-ProjFinal-P11-84745_84760/vga_files/font_16x16_bold.vhd
 -- [  0, 0000000, 0x00] top-left of a table box
 0000000000000000
 0000000000000000

@@ -19,6 +19,15 @@ Licensed under the [MIT License](LICENSE). Copyright 2025 MiguelPereZero and @cd
 
 ### Versioning
 
+#### v0.0.3 Kruskal implementation and improvements
+- `UIButton`
+  - Fixed ghost clicks when dragging
+  - Improved hover detection
+- UI elements render logic translated to `Window.h`
+- `UIText` is now a `Shape`
+- Added states to Kruskal
+- Matrix data is now loaded from a file
+
 #### v0.0.2 Graph representation
 - Added button (buggy)
 - Added Algoritmos from MiguelPereZero

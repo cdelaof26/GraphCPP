@@ -6,70 +6,125 @@
 
 #define WIDTH  640
 #define HEIGHT 480
-#define MAX_UI_ELEMENTS 500
 
 Window w(WIDTH, HEIGHT, "Graph", 60);
 Font f;
-
-Shape * shapes[MAX_UI_ELEMENTS] = {nullptr};
-int createdShapes = 0;
-
-void pushShape(Shape * s) {
-    if (createdShapes > MAX_UI_ELEMENTS)
-        throw std::runtime_error("Cannot save more Shapes");
-
-    shapes[createdShapes++] = s;
-}
-
-
-Shape * uiElements[MAX_UI_ELEMENTS] = {nullptr};
-int createdUIElements = 0;
-
-void pushUIElement(Shape * s) {
-    if (createdUIElements > MAX_UI_ELEMENTS)
-        throw std::runtime_error("Cannot save more UI elements");
-
-    uiElements[createdUIElements++] = s;
-}
-
 
 void setPixel(int i, int j, Color c) {
     w.setPixel(i, j, c);
 }
 
-bool started = false;
+std::vector<std::vector<int>> * matrix;
+std::vector<std::vector<int>> * mst;
+std::vector<std::vector<std::vector<int>>> * states;
+std::vector<Point> savedLines;
+int n = 0;
+int step = 0;
+int algorithm = -1;
 
-void start() {
-    if (started)
+void showNextStep() {
+    if (step != 0 && step >= states -> size())
         return;
 
-    started = true;
-    createdUIElements--;
-    uiElements[0] = nullptr;
+    if (step == 0) {
+        states = algorithm == 0 ? kruskal(n, *matrix, *mst) :
+                algorithm == 1 ? nullptr : nullptr;
 
-    int n = 5;
-    std::vector<std::vector<int>> matrix(n, std::vector<int>(n));
-    std::vector<std::vector<int>> mst(n, std::vector<int>(n));
-    create_matrix(n, matrix, 0);
-    insert_edge(n, matrix, 0, 1, 2);
-    insert_edge(n, matrix, 0, 4, 4);
-    insert_edge(n, matrix, 1, 2, 6);
-    insert_edge(n, matrix, 1, 4, 3);
-    insert_edge(n, matrix, 2, 3, 7);
-    insert_edge(n, matrix, 2, 4, 5);
-    insert_edge(n, matrix, 3, 4, 1);
+        // printf("states: %zu\n", states->size());
+        if (states == nullptr || states -> empty()) {
+            auto * b = dynamic_cast<UIButton *>(w.getUIElement(0));
+            b -> setText("Err");
+            b -> location.x = WIDTH - b -> getWidth() - 10;
+            b -> location.y = HEIGHT - b -> getHeight() - 10;
+            b -> setAction(nullptr);
+            b -> setTextColor(Color(255, 0, 0));
+            step = 10000;
+            return;
+        }
+    }
+
+    for (int j = 0; j < n; j++)
+        for (int i = 0; i < n; i++)
+            if ((* states)[step][i][j] != 0) {
+                // printf("non zero %d, %d %d\n", step, i, j);
+                for (int k = 0; k < savedLines.size(); k++)
+                    if (savedLines[k].x == i && savedLines[k].y == j) {
+                        // There are n initial nodes added before the lines
+                        w.getShape(n + k) -> color.setRed(255);
+                        break;
+                    }
+            }
+
+    step++;
+    if (step == states -> size())
+        w.deleteFirstUIElement();
+    // printf("steps %d\n", step);
+}
+
+void createGraph() {
+    const std::string name = "sample.txt";
+    n = get_matrix_length(name);
+    matrix = new std::vector<std::vector<int>>(n, std::vector<int>(n));
+    mst = new std::vector<std::vector<int>>(n, std::vector<int>(n));
+
+    std::string algorithmName;
+    create_matrix_from_file(name, n, algorithmName, *matrix);
+
+    auto * t = dynamic_cast<UIText *>(w.getUIElement(1));
+
+    if (algorithmName.empty()) {
+        t -> text = "Archivo invalido";
+        return;
+    }
+
+    char c = (char) std::tolower(algorithmName.at(0));
+    switch (c) {
+        case 'k':
+            algorithm = 0;
+        break;
+        case 'p':
+            algorithm = 1;
+        break;
+        case 'd':
+            algorithm = 2;
+        break;
+        default:
+            t -> text = "Algoritmo invalido";
+        return;
+    }
+
+    t -> text = algorithmName;
+
+    printf("Algorithm %s\n", algorithmName.c_str());
     printf("-------GRAPH------\n");
-    print_matrix(n, matrix);
+    print_matrix(n, *matrix);
 
     Point v[n];
     init_regular_star(v, n, WIDTH / 2, HEIGHT / 2, 200, 0);
     for (int i = 0; i < n; i++)
-        pushShape(new UINode(v[i], Color(235), std::string("") + (char) ('A' + i), f));
+        w.pushShape(new UINode(v[i], Color(235), std::string("") + (char) ('A' + i), f));
 
     for (int j = 0; j < n; j++)
-        for (int i = 0; i < n; i++)
-            if (matrix[i][j] != 0)
-                pushShape(new UILine(shapes[j] -> location, shapes[i] -> location, std::to_string(matrix[i][j]), f));
+        for (int i = j; i < n; i++)
+            if ((*matrix)[i][j] != 0) {
+                // printf("create\n");
+                savedLines.emplace_back(i, j);
+                w.pushShape(new UILine(w.getShape(j) -> location, w.getShape(i) -> location, std::to_string((*matrix)[i][j]), f));
+            }
+
+    // In the second for loop, i = j is required to avoid duplicated edges.
+    // Those nested loops will only read from the matrix diagonal and onwards.
+    // 0 2 0 0 4
+    // - 0 6 0 3
+    // - - 0 7 5
+    // - - - 0 1
+    // - - - - 0
+
+    auto * b = dynamic_cast<UIButton *>(w.getUIElement(0));
+    b -> setText("Sig");
+    b -> location.x = WIDTH - b -> getWidth() - 10;
+    b -> location.y = HEIGHT - b -> getHeight() - 10;
+    b -> setAction(reinterpret_cast<action>(showNextStep));
 }
 
 int main() {
@@ -84,17 +139,14 @@ int main() {
         return 1;
     }
 
-    /*
-    pushShape(new UINode(100, 100, Color(235, 235, 235), "A", f));
-    pushShape(new UINode(200, 200, Color(235, 235, 235), "B", f));
-    pushShape(new Line(shapes[0] -> location, shapes[1] -> location));
-    */
+    auto * b = new UIButton(reinterpret_cast<action>(createGraph), "Ini", f);
+    b -> location.x = WIDTH - b -> getWidth() - 10;
+    b -> location.y = HEIGHT - b -> getHeight() - 10;
+    w.pushUIElement(b);
 
-    pushUIElement(new UIButton(reinterpret_cast<action>(start), "Iniciar", f));
-    auto * button = dynamic_cast<UIButton *>(uiElements[0]);
-    button -> location.x = WIDTH - button -> getWidth() - 10;
-    button -> location.y = HEIGHT - button -> getHeight() - 10;
-
+    auto * t = new UIText(Point(10, 10), "", f);
+    t -> setFontMultiplier(2);
+    w.pushUIElement(t);
 
     // Main loop
     Point prevLocation;
@@ -110,50 +162,49 @@ int main() {
 			if (e.type == SDL_QUIT) {
 				quit = 1;
 			} else if (e.type == SDL_MOUSEBUTTONDOWN) {
+                if (!dragging)
+                    for (int k = w.getCreatedUIElements() - 1; k > -1; k--) {
+                        Shape * s = w.getUIElement(k);
+                        if (typeid(*s) != typeid(UIButton))
+                            continue;
+
+                        auto * button = dynamic_cast<UIButton *>(w.getUIElement(k));
+                        button -> triggerAction();
+                    }
+
                 if (e.button.button == SDL_BUTTON_LEFT)
                     dragging = true;
+
             } else if (e.type == SDL_MOUSEBUTTONUP) {
                 if (e.button.button == SDL_BUTTON_LEFT)
                     dragging = false;
-
-                if (!dragging)
-                    for (int k = createdUIElements - 1; k > -1; k--) {
-                        try {
-                            auto * b = dynamic_cast<UIButton *>(uiElements[k]);
-                            b -> triggerAction();
-                        } catch (std::runtime_error &e) { }
-                    }
 
             } else if (e.type == SDL_MOUSEMOTION) {
                 if (dragging) {
                     int xDiff = e.motion.x - prevLocation.x;
                     int yDiff = e.motion.y - prevLocation.y;
-                    for (int k = createdShapes - 1; k > -1; k--) {
-                        shapes[k] -> location.x += xDiff;
-                        shapes[k] -> location.y += yDiff;
+                    for (int k = w.getCreatedShapes() - 1; k > -1; k--) {
+                        w.getShape(k) -> location.x += xDiff;
+                        w.getShape(k) -> location.y += yDiff;
                     }
                 }
 
                 prevLocation.x = e.button.x;
                 prevLocation.y = e.button.y;
 
-                for (int k = createdUIElements - 1; k > -1; k--) {
-                    try {
-                        auto * b = dynamic_cast<UIButton *>(uiElements[k]);
-                        b -> setHover(e.motion.x, e.motion.y);
-                    } catch (std::runtime_error &e) { }
+                for (int k = w.getCreatedUIElements() - 1; k > -1; k--) {
+                    Shape * s = w.getUIElement(k);
+                    if (typeid(*s) != typeid(UIButton))
+                        continue;
+
+                    auto * button = dynamic_cast<UIButton *>(w.getUIElement(k));
+                    button -> setHover(e.motion.x, e.motion.y);
                 }
 
             } else if (e.type == SDL_KEYDOWN) {
 				switch (e.key.keysym.sym) {
 					case SDLK_ESCAPE:
 						quit = 1;
-					break;
-					case SDLK_LEFT:
-						// SDL_GetKeyboardState(NULL)[SDL_SCANCODE_LSHIFT] // Hold LShift
-					break;
-					case SDLK_a:
-						// Pressed a
 					break;
 				}
 			}
@@ -162,11 +213,7 @@ int main() {
         w.clearImage();
 
         // render logic
-        for (int k = createdShapes - 1; k > -1; k--)
-            shapes[k] -> render(reinterpret_cast<fun>(setPixel));
-
-        for (int k = createdUIElements - 1; k > -1; k--)
-            uiElements[k] -> render(reinterpret_cast<fun>(setPixel));
+        w.renderShapes(reinterpret_cast<fun>(setPixel));
 
         w.updateImage();
 	}
