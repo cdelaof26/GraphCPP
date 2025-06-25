@@ -10,6 +10,8 @@
 Window w(WIDTH, HEIGHT, "Graph", 60);
 Font f;
 
+std::string filename;
+
 void setPixel(int i, int j, Color c) {
     w.setPixel(i, j, c);
 }
@@ -23,7 +25,11 @@ int n = 0;
 int step = 0;
 int algorithm = -1;
 
-void showNextStep() {
+int source = 0;
+int * route;
+int higherCost = -1;
+
+void showNextMinimumSpanningTreeStep() {
     if (step != 0 && step >= states -> size())
         return;
 
@@ -39,7 +45,7 @@ void showNextStep() {
             b -> location.y = HEIGHT - b -> getHeight() - 10;
             b -> setAction(nullptr);
             b -> setTextColor(Color(255, 0, 0));
-            step = 10000;
+            step = INF;
             return;
         }
     }
@@ -51,7 +57,7 @@ void showNextStep() {
                 for (int k = 0; k < savedLines.size(); k++)
                     if (savedLines[k].x == i && savedLines[k].y == j) {
                         // There are n initial nodes added before the lines
-                        w.getShape(n + k) -> color.setRed(255);
+                        w.getShape(n + k) -> color.setGreen(255);
                         break;
                     }
             }
@@ -60,6 +66,54 @@ void showNextStep() {
     if (step == states -> size())
         w.deleteFirstUIElement();
     // printf("steps %d\n", step);
+}
+
+void showNextShortRouteStep() {
+    if (step >= n)
+        return;
+
+    if (step == 0) {
+        route = new int[n];
+        dijkstra(n, source, *matrix, route);
+        print_shortest_path(n, route, source);
+        for (int i = 0; i < n; i++)
+            if (route[i] > higherCost && route[i] != INF)
+                higherCost = route[i];
+    }
+
+    // Color interpolation
+    // r = (1 - t) * c1.r + t * c2.r
+    // c1 = green
+    // c2 = red
+    // t = weight / higherCost; when t = 0; c = green
+
+    bool routeFound = false;
+    while (!routeFound && step < n) {
+        for (int k = 0; k < savedLines.size(); k++)
+            if (savedLines[k].x == step && savedLines[k].y == source
+            || savedLines[k].x == source && savedLines[k].y == step) {
+                // There are n initial nodes added before the lines
+                w.getShape(n + k) -> color.setRed(
+                    /* (1 - route[step] / higherCost) * 0 + */ (int) (((float) route[step] / (float) higherCost) * 255)
+                );
+                w.getShape(n + k) -> color.setBlue(0);
+                w.getShape(n + k) -> color.setGreen(
+                    (int) ((1 - (float) route[step] / (float) higherCost) * 255) /* + (route[step] / higherCost) * 0 */
+                );
+
+                routeFound = true;
+                break;
+            }
+
+        if (routeFound)
+            break;
+
+        step++;
+    }
+
+    step++;
+    if (step == n)
+        w.deleteFirstUIElement();
 }
 
 void joinNodes() {
@@ -72,14 +126,14 @@ void joinNodes() {
     // - - - - 0
     for (int j = 0; j < n; j++)
         for (int i = j; i < n; i++)
-            if ((*matrix)[i][j] != 0) {
+            if ((*matrix)[i][j] != 0 && (*matrix)[i][j] != INF) {
                 // printf("create\n");
                 savedLines.emplace_back(i, j);
                 w.pushShape(new UILine(w.getShape(j) -> location, w.getShape(i) -> location, std::to_string((*matrix)[i][j]), f));
             }
 
     auto * b = dynamic_cast<UIButton *>(w.getUIElement(0));
-    b -> setAction(reinterpret_cast<action>(showNextStep));
+    b -> setAction(reinterpret_cast<action>(algorithm == 2 ? showNextShortRouteStep : showNextMinimumSpanningTreeStep));
 }
 
 void moveNodes() {
@@ -93,14 +147,55 @@ void moveNodes() {
     b -> setAction(reinterpret_cast<action>(joinNodes));
 }
 
+void nextNode() {
+    if (step != 0)
+        return;
+
+    w.getShape(source) -> borderColor.setGreen(0);
+    source++;
+    if (source == n)
+        source = 0;
+    w.getShape(source) -> borderColor.setGreen(255);
+}
+
+void previousNode() {
+    if (step != 0)
+        return;
+
+    w.getShape(source) -> borderColor.setGreen(0);
+    source--;
+    if (source == -1)
+        source = n - 1;
+    w.getShape(source) -> borderColor.setGreen(255);
+}
+
+void createSelectionButtons() {
+    w.getShape(source) -> borderColor.setGreen(255);
+
+    auto * prev = new UIButton(reinterpret_cast<action>(previousNode), "<", f);
+    prev -> location.x = 10;
+    prev -> location.y = HEIGHT - prev -> getHeight() - 10;
+
+    auto * next = new UIButton(reinterpret_cast<action>(nextNode), ">", f);
+    next -> location.x = prev -> location.x + prev -> getWidth() + 10;
+    next -> location.y = HEIGHT - next -> getHeight() - 10;
+
+    auto * label = new UIText("Selector", f);
+    label -> location.x = prev -> location.x + prev -> getWidth() + 5 - label -> getWidth() / 2;
+    label -> location.y = prev -> location.y - 10 - label -> getFontRealPointSize();
+
+    w.pushUIElement(prev);
+    w.pushUIElement(next);
+    w.pushUIElement(label);
+}
+
 void createGraph() {
-    const std::string name = "sample.txt";
-    n = get_matrix_length(name);
+    n = get_matrix_length(filename);
     matrix = new std::vector<std::vector<int>>(n, std::vector<int>(n));
     mst = new std::vector<std::vector<int>>(n, std::vector<int>(n));
 
     std::string algorithmName;
-    create_matrix_from_file(name, n, algorithmName, *matrix);
+    create_matrix_from_file(filename, n, algorithmName, *matrix);
 
     auto * t = dynamic_cast<UIText *>(w.getUIElement(1));
 
@@ -113,12 +208,15 @@ void createGraph() {
     switch (c) {
         case 'k':
             algorithm = 0;
+            algorithmName = "Kruskal";
         break;
         case 'p':
             algorithm = 1;
+            algorithmName = "Prim";
         break;
         case 'd':
             algorithm = 2;
+            algorithmName = "Dijkstra";
         break;
         default:
             t -> text = "Algoritmo invalido";
@@ -127,12 +225,15 @@ void createGraph() {
 
     t -> text = algorithmName;
 
-    printf("Algorithm %s\n", algorithmName.c_str());
+    printf("Algorithm is '%s'\n", algorithmName.c_str());
     printf("-------GRAPH------\n");
     print_matrix(n, *matrix);
 
     for (int i = 0; i < n; i++)
         w.pushShape(new UINode(i * 80 + 100, HEIGHT / 2, Color(235), std::string("") + (char) ('A' + i), f));
+
+    if (algorithm == 2)
+        createSelectionButtons();
 
     auto * b = dynamic_cast<UIButton *>(w.getUIElement(0));
     b -> setText("Sig");
@@ -141,7 +242,14 @@ void createGraph() {
     b -> setAction(reinterpret_cast<action>(moveNodes));
 }
 
-int main() {
+int main(int argc, char * argv[]) {
+    if (argc < 2) {
+        printf("Usage: %s /path/to/file\n", argv[0]);
+        return 1;
+    }
+
+    filename = argv[1];
+
     if (!w.isInitialized())
         return 1;
 

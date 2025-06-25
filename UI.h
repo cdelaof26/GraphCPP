@@ -63,7 +63,7 @@ public:
         }
 
         Circle::render(setPixel);
-        int len = t.getRealSize() / 2;
+        int len = t.getFontRealPointSize() / 2;
         t.location.x = (int) (location.x - len * t.text.length());
         t.location.y = location.y - len;
         t.render(setPixel);
@@ -85,9 +85,9 @@ public:
         r.color.setChannels(0);
 
         t.setFontMultiplier(1);
-        padding = t.getRealSize();
+        padding = t.getFontRealPointSize();
         semiPadding = padding / 2;
-        r.setWidth((int) (t.getRealSize() * t.text.length()) + padding);
+        r.setWidth((int) (t.getFontRealPointSize() * t.text.length()) + padding);
         r.setHeight(2 * padding);
     };
 
@@ -155,9 +155,9 @@ public:
     void setText(std::string _text) {
         t.text = std::move(_text);
         t.setFontMultiplier(2);
-        padding = t.getRealSize();
+        padding = t.getFontRealPointSize();
         semiPadding = padding / 2;
-        width = (int) (t.getRealSize() * t.text.length()) + padding;
+        width = (int) (t.getFontRealPointSize() * t.text.length()) + padding;
         height = 2 * padding;
     }
 

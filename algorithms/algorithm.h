@@ -5,7 +5,6 @@
 #include <vector>
 #include <fstream>
 
-#define MAX_NODES 100
 #define INF 100000
 
 void print_shortest_path(int n, int array[n],int source);

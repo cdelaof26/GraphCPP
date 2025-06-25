@@ -34,11 +34,12 @@ void create_matrix_from_file(const std::string& filename, int n, std::string& al
 
     std::getline(file, algorithmName);
 
-    for (int i = 0; i < n; i++){
-        for (int j = 0 ; j < n; j++)
+    for (int i = 0; i < n; i++)
+        for (int j = 0 ; j < n; j++) {
             file >> matrix[i][j];
-            // fscanf(fptr, "%d ", &matrix[i][j]);
-    }
+            if (matrix[i][j] < 0)
+                matrix[i][j] = INF;
+        }
 
     file.close();
 }

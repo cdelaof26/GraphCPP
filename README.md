@@ -9,22 +9,51 @@ Prim and Kruskal (find minimum spanning tree).
 - C++ 11
 - SDL2
 
-### Running
+### Compiling
 ```bash
-g++ --std=c++11 *.cpp fonts/*.cpp algorithms/*.cpp -o graph -lSDL2 && ./graph
+g++ --std=c++11 *.cpp fonts/*.cpp algorithms/*.cpp -o graph -lSDL2
+```
+
+### Usage
+```bash
+# Kruskal algorithm sample 
+./graph sample.txt
+
+# Dijkstra algorithm sample 
+./graph dsample.txt
+
+# Any file
+./graph path/to/file
 ```
 
 ### Defining matrix
-To define a matrix, it is necessary making edits
-to [`sample.txt`](sample.txt), at top must be the 
-name of the algorithm to use (Kruskal `k`, 
-Prim `p` or Dijkstra `d`) and, starting the next 
-line, all the square matrix data.
+To define a matrix, it is necessary to create
+a plain text file with the following format:
+<pre>
+[Algorithm name]
+[Adjacency matrix]
+</pre>
+
+> [!NOTE]  
+> Check `sample.txt` and `dsample.txt` for reference
+
+> [!WARNING]  
+> The values in the adjacency matrix must be integers
+
+`[Algorithm name]` can be one of the three values
+- Kruskal or just `k`, 
+- Prim or just `p`,
+- Dijkstra or just `d`
+  - **Note**: Use -1 in the adjacency matrix to 
+    represent `INF`.
 
 ### Licensing
 Licensed under the [MIT License](LICENSE). Copyright 2025 MiguelPereZero and @cdelaof26.
 
 ### Versioning
+
+#### v0.0.5 Partial Dijkstra implementation
+- Added CLI option to read from files
 
 #### v0.0.4 More animations
 - Also added support for Prim algorithm

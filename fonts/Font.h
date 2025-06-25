@@ -46,16 +46,20 @@ public:
         fontMultiplier = _fontMultiplier;
     }
 
-    int getRealSize() const {
+    int getFontRealPointSize() const {
         return 16 * fontMultiplier;
+    }
+
+    int getWidth() const {
+        return getFontRealPointSize() * (int) text.length();
     }
 
     void render(fun setPixel) override {
         int padding = 0;
-        int realSize = getRealSize();
+        int realSize = getFontRealPointSize();
         for (char c : text) {
-            for (int i = 0; i < getRealSize(); i++)
-                for (int j = 0; j < getRealSize(); j++)
+            for (int i = 0; i < getFontRealPointSize(); i++)
+                for (int j = 0; j < getFontRealPointSize(); j++)
                     if (font.data[c][i / fontMultiplier][j / fontMultiplier])
                         setPixel(padding + location.x + i, location.y + j, color);
 
