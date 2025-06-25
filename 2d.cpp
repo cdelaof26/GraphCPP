@@ -33,6 +33,6 @@ void init_regular_star(Point points[], int n, int cx, int cy, int r, double iniA
     for (int i = 0; i < n; i++, angl += dAngl) {
         points[i].x = (int) round(cx + r * cos(angl));
         points[i].y = (int) round(cy + r * sin(angl));
-        // printf("%d: %d %d %f\n", i, points[i][0], points[i][1], angl); // Debug
+        // printf("%d: %d %d %f\n", i, points[i].x, points[i].y, angl); // Debug
     }
 }

@@ -9,6 +9,13 @@
 typedef const void (* action) ();
 
 class UINode : public Circle {
+protected:
+    Point * translationPoint = nullptr;
+    Point _location {};
+    int translation = 0;
+    const int translationMax = 40;
+    bool translationStarted = false;
+
 public:
     UIText t;
 
@@ -24,7 +31,37 @@ public:
         setBorderWidth(3);
     }
 
+    void translateTo(Point * p) {
+        translationPoint = p;
+        printf("schedule node move to %d %d\n", translationPoint -> x, translationPoint -> y);
+    }
+
     void render(fun setPixel) override {
+        if (!translationStarted && translationPoint != nullptr) {
+            translationStarted = true;
+            _location.x = location.x;
+            _location.y = location.y;
+            // printf("start render\n");
+            // printf("_location = %d %d\n", _location.x, _location.y);
+        }
+
+        if (translationStarted && translation < translationMax) {
+            // v = end - start
+            Point v(translationPoint -> x - _location.x, translationPoint -> y - _location.y); // Not a point, though
+
+            // x = start.x + v.x * t
+            // y = start.y + v.y * t
+            location.x = _location.x + v.x * translation / translationMax;
+            location.y = _location.y + v.y * translation / translationMax;
+            // printf("%d Move to %d, %d\n", translation, translationPoint -> x, translationPoint -> y);
+
+            translation++;
+        } else if (translationPoint != nullptr) {
+            // printf("set null\n");
+            translationStarted = false;
+            translationPoint = nullptr;
+        }
+
         Circle::render(setPixel);
         int len = t.getRealSize() / 2;
         t.location.x = (int) (location.x - len * t.text.length());

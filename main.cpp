@@ -17,6 +17,7 @@ void setPixel(int i, int j, Color c) {
 std::vector<std::vector<int>> * matrix;
 std::vector<std::vector<int>> * mst;
 std::vector<std::vector<std::vector<int>>> * states;
+Point * v;
 std::vector<Point> savedLines;
 int n = 0;
 int step = 0;
@@ -28,7 +29,7 @@ void showNextStep() {
 
     if (step == 0) {
         states = algorithm == 0 ? kruskal(n, *matrix, *mst) :
-                algorithm == 1 ? nullptr : nullptr;
+                algorithm == 1 ? prim(n, *matrix, *mst) : nullptr;
 
         // printf("states: %zu\n", states->size());
         if (states == nullptr || states -> empty()) {
@@ -59,6 +60,37 @@ void showNextStep() {
     if (step == states -> size())
         w.deleteFirstUIElement();
     // printf("steps %d\n", step);
+}
+
+void joinNodes() {
+    // In the second for loop, i = j is required to avoid duplicated edges.
+    // Those nested loops will only read from the matrix diagonal and onwards.
+    // 0 2 0 0 4
+    // - 0 6 0 3
+    // - - 0 7 5
+    // - - - 0 1
+    // - - - - 0
+    for (int j = 0; j < n; j++)
+        for (int i = j; i < n; i++)
+            if ((*matrix)[i][j] != 0) {
+                // printf("create\n");
+                savedLines.emplace_back(i, j);
+                w.pushShape(new UILine(w.getShape(j) -> location, w.getShape(i) -> location, std::to_string((*matrix)[i][j]), f));
+            }
+
+    auto * b = dynamic_cast<UIButton *>(w.getUIElement(0));
+    b -> setAction(reinterpret_cast<action>(showNextStep));
+}
+
+void moveNodes() {
+    v = new Point[n];
+    init_regular_star(v, n, WIDTH / 2, HEIGHT / 2, 200, 0);
+
+    for (int i = 0; i < n; i++)
+        dynamic_cast<UINode *>(w.getShape(i)) -> translateTo(v + i);
+
+    auto * b = dynamic_cast<UIButton *>(w.getUIElement(0));
+    b -> setAction(reinterpret_cast<action>(joinNodes));
 }
 
 void createGraph() {
@@ -99,32 +131,14 @@ void createGraph() {
     printf("-------GRAPH------\n");
     print_matrix(n, *matrix);
 
-    Point v[n];
-    init_regular_star(v, n, WIDTH / 2, HEIGHT / 2, 200, 0);
     for (int i = 0; i < n; i++)
-        w.pushShape(new UINode(v[i], Color(235), std::string("") + (char) ('A' + i), f));
-
-    for (int j = 0; j < n; j++)
-        for (int i = j; i < n; i++)
-            if ((*matrix)[i][j] != 0) {
-                // printf("create\n");
-                savedLines.emplace_back(i, j);
-                w.pushShape(new UILine(w.getShape(j) -> location, w.getShape(i) -> location, std::to_string((*matrix)[i][j]), f));
-            }
-
-    // In the second for loop, i = j is required to avoid duplicated edges.
-    // Those nested loops will only read from the matrix diagonal and onwards.
-    // 0 2 0 0 4
-    // - 0 6 0 3
-    // - - 0 7 5
-    // - - - 0 1
-    // - - - - 0
+        w.pushShape(new UINode(i * 80 + 100, HEIGHT / 2, Color(235), std::string("") + (char) ('A' + i), f));
 
     auto * b = dynamic_cast<UIButton *>(w.getUIElement(0));
     b -> setText("Sig");
     b -> location.x = WIDTH - b -> getWidth() - 10;
     b -> location.y = HEIGHT - b -> getHeight() - 10;
-    b -> setAction(reinterpret_cast<action>(showNextStep));
+    b -> setAction(reinterpret_cast<action>(moveNodes));
 }
 
 int main() {

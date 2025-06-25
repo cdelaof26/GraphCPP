@@ -240,7 +240,7 @@ public:
 class Line: public Shape {
 private:
     int t = 0;
-    int maxT = 80;
+    const int maxT = 80;
 
     void setLinePixel(int x, int y, fun setPixel) const {
         if (borderWidth == 1) {

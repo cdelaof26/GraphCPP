@@ -79,6 +79,7 @@ std::vector<std::vector<std::vector<int>>> * kruskal(int n, std::vector<std::vec
     auto * states = new std::vector<std::vector<std::vector<int>>>();
 
 	while (edges < n - 1){
+        printf("total edges; %d \n", edges);
 		int min = INF;
 		for (int i = 0; i < n ; i++ ){
 			for (int j = i + 1; j < n; j++ ){
@@ -105,7 +106,7 @@ std::vector<std::vector<std::vector<int>>> * kruskal(int n, std::vector<std::vec
     return states;
 }
 
-void prim(int n, std::vector<std::vector<int>>& adjacency_matrix, std::vector<std::vector<int>>& mst){
+std::vector<std::vector<std::vector<int>>> * prim(int n, std::vector<std::vector<int>>& adjacency_matrix, std::vector<std::vector<int>>& mst){
 	create_matrix(n, mst, 0);
 	int belong_nodes[n];
 	belong_nodes[0] = 1;
@@ -118,6 +119,8 @@ void prim(int n, std::vector<std::vector<int>>& adjacency_matrix, std::vector<st
 	int nodeB;
 	//the total of edges is equal to total_nodes - 1
 	int edges = 0;
+
+    auto * states = new std::vector<std::vector<std::vector<int>>>();
 
 	while (edges < n - 1){
 		printf("total edges; %d \n", edges);
@@ -135,11 +138,14 @@ void prim(int n, std::vector<std::vector<int>>& adjacency_matrix, std::vector<st
 		}
 		// add new node to mst
 		insert_edge(n, mst, nodeA, nodeB, min);
+        states -> push_back(mst);
 		print_matrix(n, mst);
 		//check the node added
 		belong_nodes[nodeB] = 1;
 		edges++;
 	}
+
+    return states;
 }
 
 void dijkstra(int n, int source, std::vector<std::vector<int>>& matrix, int route[n]){

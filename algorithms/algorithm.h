@@ -22,7 +22,7 @@ void print_matrix(int n, std::vector<std::vector<int>>& matrix);
 
 std::vector<std::vector<std::vector<int>>> * kruskal(int n, std::vector<std::vector<int>>& adjacency_matrix, std::vector<std::vector<int>>& mst);
 
-void prim(int n, std::vector<std::vector<int>>& adjacency_matrix, std::vector<std::vector<int>>& mst);
+std::vector<std::vector<std::vector<int>>> * prim(int n, std::vector<std::vector<int>>& adjacency_matrix, std::vector<std::vector<int>>& mst);
 
 void dijkstra(int n, int source, std::vector<std::vector<int>>& matrix, int route[n]);
 
